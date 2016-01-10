@@ -1,92 +1,106 @@
-#include <SPI.h> 
-#include <Wire.h> 
-#include <Adafruit_GFX.h> 
-#include <Adafruit_SSD1306.h> 
+#include <Bounce2.h>
 
-// If using software SPI (the default case): 
-#define OLED_MOSI   9 
-#define OLED_CLK   10 
-#define OLED_DC    11 
-#define OLED_CS    12 
-#define OLED_RESET 13 
-Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS); 
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
+// If using software SPI (the default case):
+#define OLED_MOSI   9
+#define OLED_CLK   10
+#define OLED_DC    11
+#define OLED_CS    12
+#define OLED_RESET 13
+Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
+#define FLYWHEEL_FET  19 //A6
+#define PUSHER_FET 22 //A7
 
-#define PUSH_POT 0 
-bool blinkOn = true; 
-bool fDartSeen = true; 
+#define BUTTON1 23 //A0
+#define BUTTON2 24 //A1
+#define BUTTON3 25 //A2
 
-int flyPercent = 0; 
-int pushPercent = 0; 
+#define REV_TRIGGER 32 //D2
+#define FIRE_TRIGGER 1 //D3
+#define JAM_DOOR 2     //D4
+#define PUSHER 9 //D5
+#define DART_SENSOR 10 //D6
+#define MAG_SENSOR 11 //D7
 
-#if (SSD1306_LCDHEIGHT != 64) 
-#error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
-#endif 
+Bounce revTrigger = Bounce();
+Bounce fireTrigger = Bounce();
+Bounce jamDoor = Bounce();
+Bounce pusher = Bounce();
+Bounce magSensor = Bounce();
+Bounce but1 = Bounce();
+Bounce but2 = Bounce();
+Bounce but3 = Bounce();
 
-void setup()   {                 
- Serial.begin(9600); 
- display.begin(SSD1306_SWITCHCAPVCC); 
- display.clearDisplay(); 
-} 
+bool blinkOn = true;
+bool fDartSeen = true;
 
-void loop() { 
- display.clearDisplay(); 
+int flyPercent = 0;
+int pushPercent = 0;
+
+#if (SSD1306_LCDHEIGHT != 64)
+#error("Height incorrect, please fix Adafruit_SSD1306.h!");
+#endif
+
+void setup()   {                
+  Serial.begin(9600);
   
- display.fillRect(0, 0, display.width(), display.height(), WHITE); 
- display.fillRect(2, 2, display.width()-4, display.height()-4, BLACK); 
- display.drawLine(61, 0, 61, 40, WHITE); 
- display.drawLine(62, 0, 62, 40, WHITE); 
- display.drawLine(0,40,127,40,WHITE); 
+  // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
+  display.begin(SSD1306_SWITCHCAPVCC);
+  // init done  
+  display.clearDisplay();
+  display.setTextColor(WHITE);
 
- display.drawLine(0,28,127,28,WHITE); 
-
-//display flywheel percent 
- display.setCursor(7,8); 
- display.setTextSize(2); 
- display.print(flyPercent); 
- display.println("%");   
+  pinMode(REV_TRIGGER, INPUT_PULLUP);
+  revTrigger.attach(REV_TRIGGER);
+  revTrigger.interval(5);
   
- display.setCursor(7,31); 
- display.setTextSize(1); 
- display.setTextColor(WHITE); 
- display.println("Flywheel"); 
+  pinMode(FIRE_TRIGGER, INPUT_PULLUP);
+  fireTrigger.attach(FIRE_TRIGGER);    
+  fireTrigger.interval(5);
+  
+  pinMode(PUSHER, INPUT_PULLUP);
+  pusher.attach(PUSHER);
+  pusher.interval(5);
 
-// display pusher percent   
- display.setCursor(68,8); 
- display.setTextSize(2); 
- int percent = map(analogRead(PUSH_POT),0,1023,0,100); 
- int newPer = round(percent / 10) * 10; 
- display.print(newPer); 
- display.println("%"); 
+  pinMode(JAM_DOOR, INPUT_PULLUP);  
+  jamDoor.attach(JAM_DOOR);
+  jamDoor.interval(5);
 
- display.setCursor(68,31); 
- display.setTextSize(1); 
- display.println("Pusher"); 
+  pinMode(BUTTON1, INPUT_PULLUP);
+  but1.attach(BUTTON1);
+  but1.interval(5);
+  
+  pinMode(BUTTON2, INPUT_PULLUP);
+  but2.attach(BUTTON2);
+  but2.interval(5);
+  
+  pinMode(BUTTON3, INPUT_PULLUP);
+  but3.attach(BUTTON3);
+  but3.interval(5);
 
-if (fDartSeen) 
-{ 
- display.setCursor(5,44); 
- display.setTextSize(2); 
- display.setTextColor(WHITE); 
- display.println("DART READY"); 
-} 
-else 
-{ 
- if (blinkOn) 
- { 
- display.setCursor(20,44); 
- display.setTextSize(2); 
- display.setTextColor(WHITE); 
- display.println("NO DART"); 
- blinkOn = false; 
- } 
- else 
- { 
-   blinkOn = true; 
- } 
-} 
+  pinMode(DART_SENSOR, INPUT_PULLUP);
+}
 
- display.display(); 
- delay(50);   
-} 
+void loop() {
+ revTrigger.update();
+ fireTrigger.update();
+ pusher.update();
+ jamDoor.update();
+ but1.update();
+ but2.update();
+ but3.update();
+
+ int revOn = revTrigger.read();
+ int fireOn = fireTrigger.read();
+ int pusherOn = pusher.read();
+ int jamDoorOn = jamDoor.read();
+ int but1On = but1.read();
+ int but2On = but2.read();
+ int but3On = but3.read();
+
+}
