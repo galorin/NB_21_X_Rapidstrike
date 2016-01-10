@@ -1,0 +1,56 @@
+Existing RS switches
+=======================
+1. Front Magwell Switch
+2. Jam Cover Switch
+3. Plunger Stop Switch
+4. Trigger Switch
+5. Flywheel Switch
+
+Additional RS Functions
+=========================
+1. Dart Ready detect
+2. Dart Cleared detect
+3. Burst fire mode, 1> darts
+4. Full auto fire
+5. Mode select
+6. LED strip activate with pusher
+
+Extra HW
+Power Switch w/ LED
+LED strip L and R of barrel
+Ammo count?
+marked magazines
+Peizo buzzer?
+
+Flywheel speeds
+Pusher speeds
+
+[      display     ]
+[                  ]
+[                  ]
+[but1] [but2] [but3]
+
+Single Fire mode
+===========================
+  options on default screen
+    Flywheel speed - btn1
+	Darts per pull - btn2 - .5sec hold - full auto mode
+	Burst ROF      - btn3
+	
+	On option select
+	 but1 - decrement - .5sec hold - select minimum
+	 but2 - back/cancel
+     but3 - increment - .5 sec hold select max
+	
+Full Auto Mode
+===========================
+
+  options on default screen
+    Flywheel speed - btn1
+    Burst mode     - btn2
+	RoF            - btn3
+	
+	On option select
+	 but1 - decrement - .5sec hold - select minimum
+	 but2 - back/cancel 
+     but3 - increment - .5 sec hold select max
