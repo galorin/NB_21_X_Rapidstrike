@@ -1,7 +1,8 @@
+#include <SoftPWM.h>
+//#include <SoftPWM_timer.h>
 #include <Bounce2.h>
-
-#include <SPI.h>
-#include <Wire.h>
+//#include <SPI.h>
+//#include <Wire.h>
 //#include <Adafruit_GFX.h>
 //#include <Adafruit_SSD1306.h>
 
@@ -67,6 +68,12 @@ void setup()   {
   pusher.attach(PUSHER);
   pusher.interval(5);
 
+  SoftPWMBegin();
+  SoftPWMSet(FLYWHEEL_FET,0);
+  SoftPWMSetFadeTime(FLYWHEEL_FET,100,500);
+  
+  SoftPWMSet(PUSHER_FET,0);
+
   //pinMode(JAM_DOOR, INPUT_PULLUP);  
   //jamDoor.attach(JAM_DOOR);
   //jamDoor.interval(5);
@@ -98,6 +105,28 @@ void loop() {
  int revOn = revTrigger.read();
  int fireOn = fireTrigger.read();
  int pusherOn = pusher.read();
+
+ if (revOn == LOW)
+ {
+  SoftPWMSetPercent(FLYWHEEL_FET,50);
+  if (fireOn == LOW)
+  {
+    SoftPWMSet(PUSHER_FET,50);
+  }
+  else
+  {
+    while (pusherOn == HIGH)
+    {
+      SoftPWMSet(PUSHER_FET,10);
+    }
+    SoftPWMSet(PUSHER_FET,0);
+  }
+ }
+ else
+ {
+  SoftPWMSetPercent(FLYWHEEL_FET,0);
+  SoftPWMSet(PUSHER_FET,0);
+ }
  //int jamDoorOn = jamDoor.read();
  //int but1On = but1.read();
  //int but2On = but2.read();
