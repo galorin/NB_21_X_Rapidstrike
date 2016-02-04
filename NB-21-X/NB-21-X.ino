@@ -51,15 +51,18 @@ Bounce buttonL = Bounce();
 Bounce buttonM = Bounce();
 Bounce buttonR = Bounce();
 
+unsigned long prevTime;
+
 Adafruit_SSD1306 display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
 
 int flyPercent = 0; 
 int pushPercent = 0; 
 
-void setup()   {                 
- Serial.begin(9600); 
- display.begin(SSD1306_SWITCHCAPVCC); 
- display.clearDisplay(); 
+void setup()   {  
+  prevTime = millis();
+  Serial.begin(9600);
+  display.begin(SSD1306_SWITCHCAPVCC);
+  display.clearDisplay();
 
   SoftPWMBegin();
   SoftPWMSet(FLYWHEEL_FET,0);
@@ -70,14 +73,14 @@ void setup()   {
   SoftPWMSet(LED_FET,0);
   SoftPWMSetFadeTime(LED_FET,100,100);
 
-  pinMode(PUSH_RETURN, INPUT_PULLUP);  
-  pinMode(REV_TRIGGER, INPUT_PULLUP);  
-  pinMode(FIRE_TRIGGER, INPUT_PULLUP);  
-  pinMode(MAG_SENSOR, INPUT_PULLUP);  
-  pinMode(DART_SENSOR, INPUT_PULLUP);  
-  pinMode(BUTTON_L, INPUT_PULLUP);  
-  pinMode(BUTTON_M, INPUT_PULLUP);  
-  pinMode(BUTTON_R, INPUT_PULLUP);  
+  pinMode(PUSH_RETURN, INPUT_PULLUP);
+  pinMode(REV_TRIGGER, INPUT_PULLUP);
+  pinMode(FIRE_TRIGGER, INPUT_PULLUP);
+  pinMode(MAG_SENSOR, INPUT_PULLUP);
+  pinMode(DART_SENSOR, INPUT_PULLUP);
+  pinMode(BUTTON_L, INPUT_PULLUP);
+  pinMode(BUTTON_M, INPUT_PULLUP);
+  pinMode(BUTTON_R, INPUT_PULLUP);
 
   revTrigger.attach(REV_TRIGGER);
   fireTrigger.attach(FIRE_TRIGGER);
@@ -96,49 +99,111 @@ void setup()   {
   buttonR.interval(5);
 } 
 
-void loop() { 
- display.clearDisplay(); 
+void loop() {
+  display.clearDisplay();
+  drawBorders();
 
-   display.drawLine(0,0,display.width()-1,0,WHITE);
-   display.drawLine(display.width()-1,0,display.width()-1,display.height()-1,WHITE);
-   display.drawLine(display.width(),display.height()-1,0,display.height()-1,WHITE);
-   display.drawLine(0,display.height()-1,0,0,WHITE);
+  unsigned long curTime = millis();
 
-   // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
-   // When the trigger is pulled, start up the pusher motor and run it.
-   // When the trigger is released, slow the pusher motor until the switch for 
-   // the pusher is triggered.
-   if (revTrigger.read() == LOW)
-   {
-    SoftPWMSet(FLYWHEEL_FET,50);
-    if (fireTrigger.read() == LOW)
+  if (!checkErrors())// This is error checking.
+  {
+    display.setCursor(20,10);
+    display.setTextSize(3);
+    display.setTextColor(WHITE);
+    display.println("READY");
+
+    // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
+    // When the trigger is pulled, start up the pusher motor and run it.
+    // When the trigger is released, slow the pusher motor until the switch for 
+    // the pusher is triggered.
+    if (revTrigger.read() == LOW)
     {
-      SoftPWMSet(PUSHER_FET,50);
+      SoftPWMSet(FLYWHEEL_FET,50);
+      if (fireTrigger.read() == LOW)
+      {
+        SoftPWMSet(PUSHER_FET,50);
+      }
+      else
+      {
+        while (pushReturn.read() == HIGH)
+        {
+          SoftPWMSet(PUSHER_FET,10);
+        }
+        SoftPWMSet(PUSHER_FET,0);
+      }
     }
     else
     {
-      while (pushReturn.read() == HIGH)
-      {
-        SoftPWMSet(PUSHER_FET,10);
-      }
+      SoftPWMSetPercent(FLYWHEEL_FET,0);
       SoftPWMSet(PUSHER_FET,0);
     }
-   }
-   else
-   {
-     SoftPWMSetPercent(FLYWHEEL_FET,0);
-     SoftPWMSet(PUSHER_FET,0);
-   }
+  }
+  
+  if (curTime - prevTime > 50)
+  {
+    display.display();
+    prevTime = curTime;
+  }
+}
 
-  if (true)//fDartSeen && fMagIn) // This is error checking.
-  { 
-   display.setCursor(20,10); 
-   display.setTextSize(3); 
-   display.setTextColor(WHITE); 
-   display.println("READY"); 
-  } 
+bool checkErrors()
+{
+  bool errorsFound = false;
+  // reset error status when we check
+  byte errorStatus = B00000000;
+  display.clearDisplay();
+  drawBorders();
+  if (magSensor.read() == false)
+  {
+    errorStatus | 1 ;
+    errorsFound = true;
+  }
 
- display.display(); 
- delay(50);   
+  if (digitalRead(DART_SENSOR) == HIGH)
+  {
+    errorStatus | 2 ;
+    errorsFound = true;
+  }
+
+  if (errorStatus)
+  {
+    display.setCursor(10,10);
+    display.println("ERROR");
+    if (errorStatus && 1)
+    {
+      display.println("No Magazine");
+    }
+    if (errorStatus && 2)
+    {
+      display.println("No Dart");
+    }
+    display.display();
+  }
+  
+  return errorsFound;
+}
+
+void resetPusher()
+{
+  display.clearDisplay();
+  drawBorders();
+  display.setCursor(10,10);
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.println("RESETTING");
+  display.println("PUSHER");
+  display.display();
+  while (pushReturn.read() == HIGH)
+  {
+    SoftPWMSet(PUSHER_FET,10);
+  }
+}
+
+void drawBorders()
+{
+  display.drawFastHLine(0,0,display.width()-1,WHITE);
+  display.drawFastVLine(display.width()-1,0,display.height()-1,WHITE);
+  display.drawFastHLine(display.height()-1,0,display.width()-1,WHITE);
+  display.drawFastVLine(0,0,display.height()-1,WHITE);
 }
 
