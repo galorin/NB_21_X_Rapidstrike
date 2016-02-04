@@ -1,72 +1,65 @@
 #include <SoftPWM.h>
-//#include <SoftPWM_timer.h>
+#include <SoftPWM_timer.h>
 #include <Bounce2.h>
-//#include <SPI.h>
-//#include <Wire.h>
-//#include <Adafruit_GFX.h>
-//#include <Adafruit_SSD1306.h>
+#include <SPI.h> 
+#include <Wire.h> 
+#include <Adafruit_GFX.h> 
+#include <Adafruit_SSD1306.h> 
 
-// If using software SPI (the default case):
-//#define OLED_MOSI   9
-//#define OLED_CLK   10
-//#define OLED_DC    11
-//#define OLED_CS    12
-//#define OLED_RESET 13
-//Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
+// If using software SPI (the default case): 
+/*
+  GND GND
+VCC +3.3V
+D0 (SCK) D10
+D1 (MOSI) D9
+RES (RST) D13
+DC (A0) D11
+CS (CS) D12
+ */
+#define OLED_SCK  10 // D0 
+#define OLED_MOSI  9 // D1
+#define OLED_RST  13 // RES
+#define OLED_A0   11 // DC
+#define OLED_CS   12 // CS
 
-#define FLYWHEEL_FET  19 //A6
-#define PUSHER_FET 22 //A7
 
-//#define BUTTON1 23 //A0
-//#define BUTTON2 24 //A1
-//#define BUTTON3 25 //A2
+// MOSFET #define section
+#define FLYWHEEL_FET  A6 // Flywheel MOSFET signal pin
+#define PUSHER_FET    A7 // Dart pusher MOSFET signal pin
+#define LED_FET       A5 // LED effect signal button
 
-#define REV_TRIGGER 32 //D2
-#define FIRE_TRIGGER 1 //D3
-//#define JAM_DOOR 2     //D4
-#define PUSHER 9 //D5
-//#define DART_SENSOR 10 //D6
-//#define MAG_SENSOR 11 //D7
+// Button and input #define section
+#define PUSH_RETURN  1 // Pusher motor return switch
+#define REV_TRIGGER  2 // Flywheel spinup trigger
+#define FIRE_TRIGGER 3 // Fire trigger
+#define MAG_SENSOR   4 // Switch for detecting Magazine presence
+#define DART_SENSOR  5 // LED sensor for presence of dart
+#define BUTTON_L     6 // Left control button
+#define BUTTON_M     7 // Middle control button
+#define BUTTON_R     8 // Right control button
 
+#if (SSD1306_LCDHEIGHT != 64) 
+#error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
+#endif
+
+// Button debounce sections
 Bounce revTrigger = Bounce();
 Bounce fireTrigger = Bounce();
-//Bounce jamDoor = Bounce();
-Bounce pusher = Bounce();
-//Bounce magSensor = Bounce();
-//Bounce but1 = Bounce();
-//Bounce but2 = Bounce();
-//Bounce but3 = Bounce();
+Bounce pushReturn = Bounce();
+Bounce magSensor = Bounce();
+Bounce buttonL = Bounce();
+Bounce buttonM = Bounce();
+Bounce buttonR = Bounce();
 
-//bool blinkOn = true;
-//bool fDartSeen = true;
+Adafruit_SSD1306 display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
 
-//int flyPercent = 0;
-//int pushPercent = 0;
+int flyPercent = 0; 
+int pushPercent = 0; 
 
-//#if (SSD1306_LCDHEIGHT != 64)
-//#error("Height incorrect, please fix Adafruit_SSD1306.h!");
-//#endif
-
-void setup()   {                
-  Serial.begin(9600);
-  
-  // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-//  display.begin(SSD1306_SWITCHCAPVCC);
-  // init done  
-//  display.clearDisplay();
-//  display.setTextColor(WHITE);
-
-  pinMode(REV_TRIGGER, INPUT_PULLUP);
-  revTrigger.attach(REV_TRIGGER);
-  revTrigger.interval(5);
-  
-  pinMode(FIRE_TRIGGER, INPUT_PULLUP);
-  fireTrigger.attach(FIRE_TRIGGER);    
-  fireTrigger.interval(5);
-  
-  pinMode(PUSHER, INPUT_PULLUP);
-  pusher.attach(PUSHER);
-  pusher.interval(5);
+void setup()   {                 
+ Serial.begin(9600); 
+ display.begin(SSD1306_SWITCHCAPVCC); 
+ display.clearDisplay(); 
 
   SoftPWMBegin();
   SoftPWMSet(FLYWHEEL_FET,0);
@@ -74,62 +67,78 @@ void setup()   {
   
   SoftPWMSet(PUSHER_FET,0);
 
-  //pinMode(JAM_DOOR, INPUT_PULLUP);  
-  //jamDoor.attach(JAM_DOOR);
-  //jamDoor.interval(5);
+  SoftPWMSet(LED_FET,0);
+  SoftPWMSetFadeTime(LED_FET,100,100);
 
-  //pinMode(BUTTON1, INPUT_PULLUP);
-  //but1.attach(BUTTON1);
-  //but1.interval(5);
-  
-  //pinMode(BUTTON2, INPUT_PULLUP);
-  //but2.attach(BUTTON2);
-  //but2.interval(5);
-  
-  //pinMode(BUTTON3, INPUT_PULLUP);
-  //but3.attach(BUTTON3);
-  //but3.interval(5);
+  pinMode(PUSH_RETURN, INPUT_PULLUP);  
+  pinMode(REV_TRIGGER, INPUT_PULLUP);  
+  pinMode(FIRE_TRIGGER, INPUT_PULLUP);  
+  pinMode(MAG_SENSOR, INPUT_PULLUP);  
+  pinMode(DART_SENSOR, INPUT_PULLUP);  
+  pinMode(BUTTON_L, INPUT_PULLUP);  
+  pinMode(BUTTON_M, INPUT_PULLUP);  
+  pinMode(BUTTON_R, INPUT_PULLUP);  
 
-  //pinMode(DART_SENSOR, INPUT_PULLUP);
-}
+  revTrigger.attach(REV_TRIGGER);
+  fireTrigger.attach(FIRE_TRIGGER);
+  pushReturn.attach(MAG_SENSOR);
+  magSensor.attach(DART_SENSOR);
+  buttonL.attach(BUTTON_L);
+  buttonM.attach(BUTTON_M);
+  buttonR.attach(BUTTON_R);
 
-void loop() {
- revTrigger.update();
- fireTrigger.update();
- pusher.update();
- //jamDoor.update();
- //but1.update();
- //but2.update();
- //but3.update();
+  revTrigger.interval(5);
+  fireTrigger.interval(5);
+  pushReturn.interval(5);
+  magSensor.interval(5);
+  buttonL.interval(5);
+  buttonM.interval(5);
+  buttonR.interval(5);
+} 
 
- int revOn = revTrigger.read();
- int fireOn = fireTrigger.read();
- int pusherOn = pusher.read();
+void loop() { 
+ display.clearDisplay(); 
 
- if (revOn == LOW)
- {
-  SoftPWMSetPercent(FLYWHEEL_FET,50);
-  if (fireOn == LOW)
-  {
-    SoftPWMSet(PUSHER_FET,50);
-  }
-  else
-  {
-    while (pusherOn == HIGH)
+   display.drawLine(0,0,display.width()-1,0,WHITE);
+   display.drawLine(display.width()-1,0,display.width()-1,display.height()-1,WHITE);
+   display.drawLine(display.width(),display.height()-1,0,display.height()-1,WHITE);
+   display.drawLine(0,display.height()-1,0,0,WHITE);
+
+   // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
+   // When the trigger is pulled, start up the pusher motor and run it.
+   // When the trigger is released, slow the pusher motor until the switch for 
+   // the pusher is triggered.
+   if (revTrigger.read() == LOW)
+   {
+    SoftPWMSet(FLYWHEEL_FET,50);
+    if (fireTrigger.read() == LOW)
     {
-      SoftPWMSet(PUSHER_FET,10);
+      SoftPWMSet(PUSHER_FET,50);
     }
-    SoftPWMSet(PUSHER_FET,0);
-  }
- }
- else
- {
-  SoftPWMSetPercent(FLYWHEEL_FET,0);
-  SoftPWMSet(PUSHER_FET,0);
- }
- //int jamDoorOn = jamDoor.read();
- //int but1On = but1.read();
- //int but2On = but2.read();
- //int but3On = but3.read();
+    else
+    {
+      while (pushReturn.read() == HIGH)
+      {
+        SoftPWMSet(PUSHER_FET,10);
+      }
+      SoftPWMSet(PUSHER_FET,0);
+    }
+   }
+   else
+   {
+     SoftPWMSetPercent(FLYWHEEL_FET,0);
+     SoftPWMSet(PUSHER_FET,0);
+   }
 
+  if (true)//fDartSeen && fMagIn) // This is error checking.
+  { 
+   display.setCursor(20,10); 
+   display.setTextSize(3); 
+   display.setTextColor(WHITE); 
+   display.println("READY"); 
+  } 
+
+ display.display(); 
+ delay(50);   
 }
+
