@@ -114,6 +114,33 @@ void loop() {
     display.setTextColor(WHITE);
     display.println("READY");
 
+    display.setCursor(20,20);
+    if (fSingleFire)
+    {
+      if (dartsPerPull > 1)
+      {
+        display.println("semi-auto");
+      }
+      else
+      {
+        display.println("select-fire: " + dartsPerPull);
+      }
+    }
+    else
+    {
+      display.println("full auto");
+    }
+
+    display.drawFastHLine(display.height()-30,0,display.width()-1,WHITE);
+    display.setCursor(20,30);
+    display.setTextSize(1);
+    display.println(" - | mode | + ");
+
+    if (buttonM.read() == LOW)
+    {
+      fSingleFire = !fSingleFire;
+    }
+
     // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
     // When the trigger is pulled, start up the pusher motor and run it.
     // When the trigger is released, slow the pusher motor until the switch for 
@@ -123,7 +150,14 @@ void loop() {
       SoftPWMSet(FLYWHEEL_FET,50);
       if (fireTrigger.read() == LOW)
       {
-        SoftPWMSet(PUSHER_FET,50);
+        if (fSingleFire)
+        {
+          // Do didly squat
+        }
+        else
+        {
+          SoftPWMSet(PUSHER_FET,50);
+        }
       }
       else
       {
