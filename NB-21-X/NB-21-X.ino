@@ -57,6 +57,8 @@ Adafruit_SSD1306 display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS);
 
 int flyPercent = 0; 
 int pushPercent = 0; 
+uint8_t dartsPerPull = 1;
+bool fSingleFire = false;
 
 void setup()   {  
   prevTime = millis();
@@ -148,6 +150,7 @@ void loop() {
 
 bool checkErrors()
 {
+  unsigned long curTime = millis();
   bool errorsFound = false;
   // reset error status when we check
   byte errorStatus = B00000000;
@@ -177,7 +180,13 @@ bool checkErrors()
     {
       display.println("No Dart");
     }
-    display.display();
+
+    //only update the display every 50ms
+    if (curTime - prevTime > 50)
+    {
+      display.display();
+      prevTime = curTime;
+    }
   }
   
   return errorsFound;
