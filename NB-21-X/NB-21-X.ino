@@ -58,129 +58,8 @@ Adafruit_SSD1306 display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS);
 int flyPercent = 0; 
 int pushPercent = 0; 
 uint8_t dartsPerPull = 1;
-bool fSingleFire = false;
+bool fSingleFire = true;
 
-void setup()   {  
-  prevTime = millis();
-  Serial.begin(9600);
-  display.begin(SSD1306_SWITCHCAPVCC);
-  display.clearDisplay();
-
-  SoftPWMBegin();
-  SoftPWMSet(FLYWHEEL_FET,0);
-  SoftPWMSetFadeTime(FLYWHEEL_FET,100,500);
-  
-  SoftPWMSet(PUSHER_FET,0);
-
-  SoftPWMSet(LED_FET,0);
-  SoftPWMSetFadeTime(LED_FET,100,100);
-
-  pinMode(PUSH_RETURN, INPUT_PULLUP);
-  pinMode(REV_TRIGGER, INPUT_PULLUP);
-  pinMode(FIRE_TRIGGER, INPUT_PULLUP);
-  pinMode(MAG_SENSOR, INPUT_PULLUP);
-  pinMode(DART_SENSOR, INPUT_PULLUP);
-  pinMode(BUTTON_L, INPUT_PULLUP);
-  pinMode(BUTTON_M, INPUT_PULLUP);
-  pinMode(BUTTON_R, INPUT_PULLUP);
-
-  revTrigger.attach(REV_TRIGGER);
-  fireTrigger.attach(FIRE_TRIGGER);
-  pushReturn.attach(MAG_SENSOR);
-  magSensor.attach(DART_SENSOR);
-  buttonL.attach(BUTTON_L);
-  buttonM.attach(BUTTON_M);
-  buttonR.attach(BUTTON_R);
-
-  revTrigger.interval(5);
-  fireTrigger.interval(5);
-  pushReturn.interval(5);
-  magSensor.interval(5);
-  buttonL.interval(5);
-  buttonM.interval(5);
-  buttonR.interval(5);
-} 
-
-void loop() {
-  display.clearDisplay();
-  drawBorders();
-
-  unsigned long curTime = millis();
-
-  if (!checkErrors())// This is error checking.
-  {
-    display.setCursor(20,10);
-    display.setTextSize(3);
-    display.setTextColor(WHITE);
-    display.println("READY");
-
-    display.setCursor(20,20);
-    if (fSingleFire)
-    {
-      if (dartsPerPull > 1)
-      {
-        display.println("semi-auto");
-      }
-      else
-      {
-        display.println("select-fire: " + dartsPerPull);
-      }
-    }
-    else
-    {
-      display.println("full auto");
-    }
-
-    display.drawFastHLine(display.height()-30,0,display.width()-1,WHITE);
-    display.setCursor(20,30);
-    display.setTextSize(1);
-    display.println(" - | mode | + ");
-
-    if (buttonM.read() == LOW)
-    {
-      fSingleFire = !fSingleFire;
-    }
-
-    // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
-    // When the trigger is pulled, start up the pusher motor and run it.
-    // When the trigger is released, slow the pusher motor until the switch for 
-    // the pusher is triggered.
-    if (revTrigger.read() == LOW)
-    {
-      SoftPWMSet(FLYWHEEL_FET,50);
-      if (fireTrigger.read() == LOW)
-      {
-        if (fSingleFire)
-        {
-          // Do didly squat
-        }
-        else
-        {
-          SoftPWMSet(PUSHER_FET,50);
-        }
-      }
-      else
-      {
-        while (pushReturn.read() == HIGH)
-        {
-          SoftPWMSet(PUSHER_FET,10);
-        }
-        SoftPWMSet(PUSHER_FET,0);
-      }
-    }
-    else
-    {
-      SoftPWMSetPercent(FLYWHEEL_FET,0);
-      SoftPWMSet(PUSHER_FET,0);
-    }
-  }
-  
-  if (curTime - prevTime > 50)
-  {
-    display.display();
-    prevTime = curTime;
-  }
-}
 
 bool checkErrors()
 {
@@ -244,9 +123,144 @@ void resetPusher()
 
 void drawBorders()
 {
-  display.drawFastHLine(0,0,display.width()-1,WHITE);
-  display.drawFastVLine(display.width()-1,0,display.height()-1,WHITE);
-  display.drawFastHLine(display.height()-1,0,display.width()-1,WHITE);
-  display.drawFastVLine(0,0,display.height()-1,WHITE);
+  display.drawFastHLine(0,0,127,WHITE);
+  display.drawFastVLine(127,0,63,WHITE);
+  display.drawFastHLine(0,63,127,WHITE);
+  display.drawFastVLine(0,0,63,WHITE);
 }
+
+void setup()   {  
+  prevTime = millis();
+  Serial.begin(9600);
+  display.begin(SSD1306_SWITCHCAPVCC);
+  display.clearDisplay();
+
+  SoftPWMBegin();
+  SoftPWMSet(FLYWHEEL_FET,0);
+  SoftPWMSetFadeTime(FLYWHEEL_FET,100,500);
+  
+  SoftPWMSet(PUSHER_FET,0);
+
+  SoftPWMSet(LED_FET,0);
+  SoftPWMSetFadeTime(LED_FET,100,100);
+
+  pinMode(PUSH_RETURN, INPUT_PULLUP);
+  pinMode(REV_TRIGGER, INPUT_PULLUP);
+  pinMode(FIRE_TRIGGER, INPUT_PULLUP);
+  pinMode(MAG_SENSOR, INPUT_PULLUP);
+  pinMode(DART_SENSOR, INPUT_PULLUP);
+  pinMode(BUTTON_L, INPUT_PULLUP);
+  pinMode(BUTTON_M, INPUT_PULLUP);
+  pinMode(BUTTON_R, INPUT_PULLUP);
+
+  revTrigger.attach(REV_TRIGGER);
+  fireTrigger.attach(FIRE_TRIGGER);
+  pushReturn.attach(MAG_SENSOR);
+  magSensor.attach(DART_SENSOR);
+  buttonL.attach(BUTTON_L);
+  buttonM.attach(BUTTON_M);
+  buttonR.attach(BUTTON_R);
+
+  revTrigger.interval(5);
+  fireTrigger.interval(5);
+  pushReturn.interval(5);
+  magSensor.interval(5);
+  buttonL.interval(5);
+  buttonM.interval(5);
+  buttonR.interval(5);
+} 
+
+void loop() {
+  display.clearDisplay();
+  drawBorders();
+
+  unsigned long curTime = millis();
+
+  if (true)//(!checkErrors())// This is error checking.
+  {
+    display.setCursor(33,3);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.println("READY");
+
+    
+    if (fSingleFire)
+    {
+      if (dartsPerPull == 1)
+      {
+		display.setTextSize(2);
+		display.setCursor(10,20);
+        display.println("SEMI-AUTO");
+      }
+      else
+      {
+	    display.setTextSize(2);
+		display.setCursor(5,20);
+        display.print("MULTI-FIRE");
+      }
+    }
+    else
+    {
+      display.setTextSize(2);
+	  display.setCursor(10,20);
+      display.println("FULL-AUTO");
+    }
+
+    display.drawFastHLine(0,50,127,WHITE);
+    display.setTextSize(1);
+	display.setCursor(21,53);
+	display.print("-");
+	display.drawFastVLine(41,52,22,WHITE);
+	display.setCursor(53,53);
+    display.print("MODE");
+	display.drawFastVLine(83,52,22,WHITE);
+	display.setCursor(105,53);
+	display.print("+");
+
+    if (buttonM.read() == LOW)
+    {
+      fSingleFire = !fSingleFire;
+    }
+
+    // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
+    // When the trigger is pulled, start up the pusher motor and run it.
+    // When the trigger is released, slow the pusher motor until the switch for 
+    // the pusher is triggered.
+    if (revTrigger.read() == LOW)
+    {
+      SoftPWMSet(FLYWHEEL_FET,50);
+      if (fireTrigger.read() == LOW)
+      {
+        if (fSingleFire)
+        {
+          // Do didly squat
+        }
+        else
+        {
+          SoftPWMSet(PUSHER_FET,50);
+        }
+      }
+      else
+      {
+        while (pushReturn.read() == HIGH)
+        {
+          SoftPWMSet(PUSHER_FET,10);
+        }
+        SoftPWMSet(PUSHER_FET,0);
+      }
+    }
+    else
+    {
+      SoftPWMSetPercent(FLYWHEEL_FET,0);
+      SoftPWMSet(PUSHER_FET,0);
+    }
+  }
+  
+  if (curTime - prevTime > 50)
+  {
+    display.display();
+    prevTime = curTime;
+  }
+}
+
 
