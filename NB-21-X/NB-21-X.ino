@@ -173,6 +173,14 @@ void setup()   {
 void loop() {
   display.clearDisplay();
   drawBorders();
+  
+  revTrigger.update();
+  fireTrigger.update();
+  pushReturn.update();
+  magSensor.update();
+  buttonL.update();
+  buttonM.update();
+  buttonR.update();
 
   unsigned long curTime = millis();
 
@@ -217,7 +225,7 @@ void loop() {
 	display.setCursor(105,53);
 	display.print("+");
 
-    if (buttonM.read() == LOW)
+    if (buttonM.fell())
     {
       fSingleFire = !fSingleFire;
     }
@@ -229,10 +237,29 @@ void loop() {
     if (revTrigger.read() == LOW)
     {
       SoftPWMSet(FLYWHEEL_FET,50);
-      if (fireTrigger.read() == LOW)
+      if (fireTrigger.fell())
       {
         if (fSingleFire)
         {
+			bool returnTrig = false;
+			// Single fire should only run the pusher long enough to
+			// push a dart in, then retract until the stop is triggered
+			unsigned long pushTime = millis();
+			while (pushTime < curTime + 80 )
+			{
+				SoftPWMSet(PUSHER_FET,50);
+				pushTime = millis();
+				pushReturn.update();
+				if (pushReturn.rise())
+				{
+					returnTrig = true;
+					break;
+				}
+			}
+			while (!pushReturn.rise())
+			{
+				
+			}
           // Do didly squat
         }
         else
