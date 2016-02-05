@@ -29,14 +29,14 @@ CS (CS) D12
 #define LED_FET       A5 // LED effect signal button
 
 // Button and input #define section
+#define BUTTON_L     2 // Right control button
+#define BUTTON_M     3 // Middle control button
+#define BUTTON_R     4 // Left control button
+#define REV_TRIGGER  5 // Flywheel spinup trigger
+#define FIRE_TRIGGER 6 // Fire trigger
 #define PUSH_RETURN  7 // Pusher motor return switch
-#define REV_TRIGGER  6 // Flywheel spinup trigger
-#define FIRE_TRIGGER 5 // Fire trigger
 #define MAG_SENSOR   8 // Switch for detecting Magazine presence
 #define DART_SENSOR  12 // LED sensor for presence of dart
-#define BUTTON_L     4 // Left control button
-#define BUTTON_M     3 // Middle control button
-#define BUTTON_R     2 // Right control button
 
 #if (SSD1306_LCDHEIGHT != 64) 
 #error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
@@ -124,9 +124,28 @@ void resetPusher()
 void drawBorders()
 {
   display.drawFastHLine(0,0,127,WHITE);
-  display.drawFastVLine(127,0,63,WHITE);
+  display.drawFastVLine(127,0,64,WHITE);
   display.drawFastHLine(0,63,127,WHITE);
   display.drawFastVLine(0,0,63,WHITE);
+}
+
+void drawDart(uint8_t numOfDarts)
+{
+	// A dart drawing is 12 pixels wide and 5 pixels high.
+	// XXXXXXXXXXX
+	// X       X  X
+	// X       X   X
+	// X       X  X
+	// XXXXXXXXXXX
+	for (int iOffset = 0; iOffset < numOfDarts; iOffset++)
+	{
+	  int iMove = iOffset * 12;
+	display.drawFastHLine(3 + iMove,42,10,WHITE);
+	display.drawFastHLine(3 + iMove,46,10,WHITE);
+	display.drawFastVLine(3 + iMove,42,5,WHITE);
+	display.drawFastVLine(10 + iMove,42,5,WHITE);
+	display.drawFastVLine(13 + iMove,43,3,WHITE);
+	}
 }
 
 void setup()   {  
@@ -205,11 +224,7 @@ void loop() {
 	    display.setTextSize(2);
 		display.setCursor(5,20);
         display.println("MULTI-FIRE");
-		display.setCursor(2,37);
-		display.setTextSize(1);
-		display.print("DARTS:");
-		display.setCursor(37,37);
-		display.print(dartsPerPull);
+		drawDart(dartsPerPull);
       }
     }
     else
@@ -229,25 +244,8 @@ void loop() {
 	display.drawFastVLine(83,52,22,WHITE);
 	display.setCursor(105,53);
 	display.print("+");
-
-    if (buttonL.fell())
-	{
-		if (fSingleFire)
-		{
-			if (dartsPerPull < 10)
-			{
-				dartsPerPull++;
-			}
-		}
-	}
 	
-	if (buttonM.fell())
-    {
-      fSingleFire = !fSingleFire;
-	  Serial.println("Mode switch");
-    }
-	
-	if (buttonR.fell())
+	if (buttonL.fell())
 	{
 		if (fSingleFire)
 		{
@@ -257,84 +255,48 @@ void loop() {
 			}
 		}
 	}
+	
+		if (buttonM.fell())
+    {
+      fSingleFire = !fSingleFire;
+	  Serial.println("Mode switch");
+    }
+	
+	if (buttonR.fell())
+	{
+		if (fSingleFire)
+		{
+			if (dartsPerPull < 10)
+			{
+				dartsPerPull++;
+			}
+		}
+	}
 
     // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
     // When the trigger is pulled, start up the pusher motor and run it.
     // When the trigger is released, slow the pusher motor until the switch for 
     // the pusher is triggered.
     if (revTrigger.read() == LOW)
-    {
-		Serial.println("Flywheel start");
-      SoftPWMSet(FLYWHEEL_FET,50);
-      if (fireTrigger.fell())
-      {
-		  Serial.println("Trigger pulled");
-        if (fSingleFire)
-        {
-		  if (dartsPerPull == 1)
-		  {
-			bool returnTrig = false;
-			// Single fire should only run the pusher long enough to
-			// push a dart in, then retract until the stop is triggered
-			unsigned long pushTime = millis();
-			while (pushTime < curTime + 80 )
+	{
+		Serial.println("flywheel start");
+		SoftPWMSetPercent(FLYWHEEL_FET,50);
+		if (fireTrigger.read() == LOW)
+		{
+			Serial.println("firing start");
+			fireTrigger.update();
+			while (!fireTrigger.rose())
 			{
-				Serial.println("Firing shot");
 				SoftPWMSet(PUSHER_FET,50);
-				pushTime = millis();
-				pushReturn.update();
-				if (pushReturn.rose())
-				{
-					Serial.println("TRIGGERED BEFORE 80ms!!");
-					returnTrig = true;
-					SoftPWMSet(PUSHER_FET,0);
-					pushReturn.update();
-					break;
-				}
+				Serial.println("firing continue");
+				delay(100);
+				fireTrigger.update();
 			}
-			while (!pushReturn.rose())
-			{
-				Serial.println("Slowing pusher");
-              SoftPWMSet(PUSHER_FET,10);
-			}
-			Serial.println("Pusher stop");
+			Serial.println("firing stop");
 			SoftPWMSet(PUSHER_FET,0);
-          // Do didly squat
-		  }
-		  else
-		  {
-			uint8_t remaining = dartsPerPull;
-			while (remaining >= 0)
-			{
-			  SoftPWMSet(PUSHER_FET,50);
-			  pushReturn.update();
-			  if (pushReturn.rose())
-			  {
-                  remaining--;
-     		  }
-			}
-			pushReturn.update();
-			  while (!pushReturn.rose())
-			  {
-				  SoftPWMSet(PUSHER_FET,10);
-			  }
-			    SoftPWMSet(PUSHER_FET,0);
-		  }
-        }
-        else
-        {
-          SoftPWMSet(PUSHER_FET,50);
-        }
-      }
-      else
-      {
-        while (pushReturn.read() == HIGH)
-        {
-          SoftPWMSet(PUSHER_FET,10);
-        }
-        SoftPWMSet(PUSHER_FET,0);
-      }
-    }
+			delay(500);
+		}
+	}
     else
     {
 		Serial.println("all stop");
