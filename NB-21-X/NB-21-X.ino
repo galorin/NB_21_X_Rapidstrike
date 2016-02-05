@@ -55,11 +55,18 @@ unsigned long prevTime;
 
 Adafruit_SSD1306 display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
 
-int flyPercent = 0; 
-int pushPercent = 0; 
-uint8_t dartsPerPull = 1;
-bool fSingleFire = true;
+byte flyPercent = 50; 
+byte pushPercent = 50; 
+byte dartsPerPull = 1;
+bool fSingleFire = false;
 
+void drawBorders()
+{
+  display.drawFastHLine(0,0,127,WHITE);
+  display.drawFastVLine(127,0,64,WHITE);
+  display.drawFastHLine(0,63,127,WHITE);
+  display.drawFastVLine(0,0,63,WHITE);
+}
 
 bool checkErrors()
 {
@@ -115,21 +122,14 @@ void resetPusher()
   display.println("RESETTING");
   display.println("PUSHER");
   display.display();
-  while (pushReturn.read() == HIGH)
+  while (!pushReturn.rose())
   {
     SoftPWMSet(PUSHER_FET,10);
+    pushReturn.update();
   }
 }
 
-void drawBorders()
-{
-  display.drawFastHLine(0,0,127,WHITE);
-  display.drawFastVLine(127,0,64,WHITE);
-  display.drawFastHLine(0,63,127,WHITE);
-  display.drawFastVLine(0,0,63,WHITE);
-}
-
-void drawDart(uint8_t numOfDarts)
+void drawDart(byte numOfDarts)
 {
 	// A dart drawing is 12 pixels wide and 5 pixels high.
 	// XXXXXXXXXXX
@@ -137,9 +137,9 @@ void drawDart(uint8_t numOfDarts)
 	// X       X   X
 	// X       X  X
 	// XXXXXXXXXXX
-	for (int iOffset = 0; iOffset < numOfDarts; iOffset++)
+	for (byte iOffset = 0; iOffset < numOfDarts; iOffset++)
 	{
-	  int iMove = iOffset * 12;
+	  byte iMove = iOffset * 12;
 	display.drawFastHLine(3 + iMove,42,10,WHITE);
 	display.drawFastHLine(3 + iMove,46,10,WHITE);
 	display.drawFastVLine(3 + iMove,42,5,WHITE);
@@ -150,7 +150,7 @@ void drawDart(uint8_t numOfDarts)
 
 void setup()   {  
   prevTime = millis();
-  Serial.begin(9600);
+  //Serial.begin(9600);
   display.begin(SSD1306_SWITCHCAPVCC);
   display.clearDisplay();
 
@@ -209,7 +209,6 @@ void loop() {
     display.setTextSize(2);
     display.setTextColor(WHITE);
     display.println("READY");
-
     
     if (fSingleFire)
     {
@@ -234,13 +233,13 @@ void loop() {
       display.println("FULL-AUTO");
     }
 
-    display.drawFastHLine(0,50,127,WHITE);
-    display.setTextSize(1);
+  display.drawFastHLine(0,50,127,WHITE);
+  display.setTextSize(1);
 	display.setCursor(21,53);
 	display.print("-");
 	display.drawFastVLine(41,52,22,WHITE);
 	display.setCursor(53,53);
-    display.print("MODE");
+  display.print("MODE");
 	display.drawFastVLine(83,52,22,WHITE);
 	display.setCursor(105,53);
 	display.print("+");
@@ -256,10 +255,10 @@ void loop() {
 		}
 	}
 	
-		if (buttonM.fell())
+	if (buttonM.fell())
     {
       fSingleFire = !fSingleFire;
-	  Serial.println("Mode switch");
+	    //Serial.println("Mode switch");
     }
 	
 	if (buttonR.fell())
@@ -279,27 +278,28 @@ void loop() {
     // the pusher is triggered.
     if (revTrigger.read() == LOW)
 	{
-		Serial.println("flywheel start");
-		SoftPWMSetPercent(FLYWHEEL_FET,50);
+		//Serial.println("flywheel start");
+		SoftPWMSetPercent(FLYWHEEL_FET,flyPercent);
 		if (fireTrigger.read() == LOW)
 		{
-			Serial.println("firing start");
+			//Serial.println("firing start");
 			fireTrigger.update();
 			while (!fireTrigger.rose())
 			{
-				SoftPWMSet(PUSHER_FET,50);
-				Serial.println("firing continue");
+				SoftPWMSet(PUSHER_FET,pushPercent);
+				//Serial.println("firing continue");
 				delay(100);
 				fireTrigger.update();
 			}
-			Serial.println("firing stop");
+			//Serial.println("firing stop");
+      resetPusher();
 			SoftPWMSet(PUSHER_FET,0);
 			delay(500);
 		}
 	}
     else
     {
-		Serial.println("all stop");
+		//Serial.println("all stop");
       SoftPWMSetPercent(FLYWHEEL_FET,0);
       SoftPWMSet(PUSHER_FET,0);
     }
