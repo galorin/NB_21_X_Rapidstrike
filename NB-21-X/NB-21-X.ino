@@ -81,34 +81,39 @@ bool checkErrors()
   bool errorsFound = false;
   // reset error status when we check
   byte errorStatus = B00000000;
-  display.clearDisplay();
-  drawBorders();
-  if (magSensor.read() == false)
+  if (magSensor.read() == HIGH)
   {
-    errorStatus | 1 ;
+    errorStatus = errorStatus | B00000001;
     errorsFound = true;
   }
 
-  if (digitalRead(DART_SENSOR) == HIGH)
-  {
-    errorStatus | 2 ;
-    errorsFound = true;
-  }
+//  if (digitalRead(DART_SENSOR) == HIGH)
+//  {
+//    errorStatus = errorStatus | B00000010 ;
+//    errorsFound = true;
+//  }
 
-  if (errorStatus)
+  if (errorsFound)
   {
-    display.setCursor(10,10);
+    display.clearDisplay();
+    drawBorders();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(35,3);
     display.println("ERROR");
-    if (errorStatus && 1)
+    //display.setTextSize(1);
+    if (errorStatus & B00000001)
     {
-      display.println("No Magazine");
+      display.setCursor(18,20);
+      display.println("MAGAZINE");
     }
-    if (errorStatus && 2)
+    if (errorStatus & B00000010)
     {
       display.println("No Dart");
     }
 
     //only update the display every 50ms
+    curTime = millis();
     if (curTime - prevTime > 50)
     {
       display.display();
@@ -123,16 +128,22 @@ void resetPusher()
 {
   display.clearDisplay();
   drawBorders();
-  display.setCursor(10,10);
+  display.setCursor(10,7);
   display.setTextSize(2);
   display.setTextColor(WHITE);
   display.println("RESETTING");
+  display.setCursor(27,30);
   display.println("PUSHER");
   display.display();
   while (!pushReturn.rose())
   {
     SoftPWMSet(PUSHER_FET,10);
     pushReturn.update();
+    jamDoor.update();
+    if (jamDoor.fell())
+    {
+      return;
+    }
   }
 }
 
@@ -348,9 +359,9 @@ void loop() {
   }  
   }
   
-
-  if (true)//(!checkErrors())// This is error checking.
+  if (!checkErrors())// This is error checking.
   {
+    //Serial.println("This is fine");
     display.setCursor(33,3);
     display.setTextSize(2);
     display.setTextColor(WHITE);
