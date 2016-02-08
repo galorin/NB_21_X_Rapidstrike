@@ -47,6 +47,15 @@ CS (CS) D12
 #error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
 #endif
 
+enum magSizes
+{
+  6ROUND,
+  12ROUND,
+  18ROUND,
+  25ROUND,
+  35ROUND
+};
+
 // Button debounce sections
 Bounce revTrigger = Bounce();
 Bounce fireTrigger = Bounce();
@@ -65,6 +74,8 @@ byte flyPercent = 50;
 byte pushPercent = 50; 
 byte ledPercent = 50;
 byte dartsPerPull = 1;
+byte dartsRemaining = 0;
+magSizes curMag = 12ROUND;
 bool fSingleFire = false;
 
 void drawBorders()
@@ -208,6 +219,29 @@ void setup()   {
   buttonL.interval(5);
   buttonM.interval(5);
   buttonR.interval(5);  
+  
+  display.clearDisplay();
+  drawBorders();
+  display.display();
+  
+  magSensor.update();
+  pushReturn.update();
+  
+  if (pushReturn.read() == HIGH)
+  {
+    display.setCursor(3,3);
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.println("Please wait while Pusher is reset");
+    
+    while (!pushReturn.rose())
+    {
+      SoftPWMSet(PUSHER_FET,10);
+      pushReturn.update();
+    }
+    SoftPWMSet(PUSHER_FET,0);
+  }
+  
 } 
 
 void loop() {
@@ -434,31 +468,90 @@ void loop() {
     // When the trigger is released, slow the pusher motor until the switch for 
     // the pusher is triggered.
     if (revTrigger.read() == LOW)
-  {
+    {
     //Serial.println("flywheel start");
     SoftPWMSetPercent(FLYWHEEL_FET,flyPercent);
-    if (fireTrigger.read() == LOW)
-    {
-      //Serial.println("firing start");
-      fireTrigger.update();
-      while (!fireTrigger.rose())
+      if (fireTrigger.read() == LOW)
       {
-        SoftPWMSet(PUSHER_FET,pushPercent);
-        //Serial.println("firing continue");
-        delay(100);
+        //Serial.println("firing start");
         fireTrigger.update();
+        if (fSingleFire)
+        {
+          if (dartsPerPull == 1)
+          {
+            pushReturn.update();
+            jamDoor.update();
+            while (!pushReturn.fell())
+            {
+              if (jamDoor.fell())
+               {
+                 return;
+               }
+               SoftPWMSet(PUSHER_FET,pushPercent);
+            }
+            resetPusher();
+            SoftPWMSet(PUSHER_FET,0);
+          }
+          else
+          {
+            byte dartsRemaining = dartsPerPull;
+            
+            while (dartsRemaining > 0)
+            {
+               curTime = millis();
+               pushReturn.update();
+               jamDoor.update();
+               if (jamDoor.fell())
+               {
+                 return;
+               }
+               if (curTime - prevTime > 50)
+                 {
+                   display.clearDisplay();
+                   drawBorders();
+                   display.setCursor(33,3);
+                   display.setTextSize(2);
+                   display.setTextColor(WHITE);
+                   display.println("READY");        
+                   display.setTextSize(2);
+                   display.setCursor(5,20);
+                   display.println("MULTI-FIRE");
+                   drawDart(dartsRemaining);
+                   display.display();
+                   prevTime = curTime;
+                 }
+              //fire
+              SoftPWMSet(PUSHER_FET,pushPercent);
+              if (pushReturn.fell())
+              {
+                dartsRemaining--;
+              }
+            }
+            resetPusher();
+            SoftPWMSet(PUSHER_FET,0);       
+          }
+        }
+        else
+        {
+          while (!fireTrigger.rose())
+          {
+            SoftPWMSet(PUSHER_FET,pushPercent);
+            //Serial.println("firing continue");
+            delay(100);
+            fireTrigger.update();
+          }
+        }
+        //Serial.println("firing stop");
+        resetPusher();
+        SoftPWMSet(PUSHER_FET,0);
+        delay(500);
       }
-      //Serial.println("firing stop");
-      resetPusher();
-      SoftPWMSet(PUSHER_FET,0);
-      delay(500);
     }
-  }
     else
     {
     //Serial.println("all stop");
       SoftPWMSetPercent(FLYWHEEL_FET,0);
-      SoftPWMSet(PUSHER_FET,0);
+      resetPusher();
     }
   }
   
