@@ -23,7 +23,7 @@ CS (CS) D12
 #define OLED_CS   12 // CS
 
 // MOSFET #define section
-#define LED_FET       A5 // LED effect signal button
+#define LED_FET       13 // LED effect signal button
 #define FLYWHEEL_FET  A6 // Flywheel MOSFET signal pin
 #define PUSHER_FET    A7 // Dart pusher MOSFET signal pin
 #define BRAKE_FET     A8 // Pusher brake FET signal pin
@@ -59,7 +59,7 @@ Bounce jamDoor = Bounce();
 
 unsigned long prevTime;
 
-Adafruit_SSD1306 display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
+//Adafruit_SSD1306 //display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
 
 byte flyPercent = 50; 
 byte pushPercent = 100; 
@@ -71,18 +71,18 @@ byte runsLeft = 10;
 
 void drawBorders()
 {
-  display.drawFastHLine(0,0,127,WHITE);
-  display.drawFastVLine(127,0,64,WHITE);
-  display.drawFastHLine(0,63,127,WHITE);
-  display.drawFastVLine(0,0,63,WHITE);
+  //display.drawFastHLine(0,0,127,WHITE);
+  //display.drawFastVLine(127,0,64,WHITE);
+  //display.drawFastHLine(0,63,127,WHITE);
+  //display.drawFastVLine(0,0,63,WHITE);
 }
 
 void setup()   {  
   prevTime = millis();
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("PWM %, prevTime, curTime");
-  display.begin(SSD1306_SWITCHCAPVCC);
-  display.clearDisplay();
+  //display.begin(SSD1306_SWITCHCAPVCC);
+  //display.clearDisplay();
 
   SoftPWMBegin();
   SoftPWMSet(FLYWHEEL_FET,0);
@@ -91,7 +91,7 @@ void setup()   {
   SoftPWMSet(PUSHER_FET,0);
 
   SoftPWMSet(LED_FET,0);
-  SoftPWMSetFadeTime(LED_FET,100,100);
+  SoftPWMSetFadeTime(LED_FET,0,0);
 
   pinMode(PUSH_RETURN, INPUT_PULLUP);
   pinMode(REV_TRIGGER, INPUT_PULLUP);
@@ -121,9 +121,9 @@ void setup()   {
   buttonM.interval(5);
   buttonR.interval(5);  
   
-  display.clearDisplay();
+  //display.clearDisplay();
   drawBorders();
-  display.display();
+  //display.//display();
   
   magSensor.update();
   pushReturn.update();
@@ -131,47 +131,53 @@ void setup()   {
 } 
 
 void loop() {
- display.clearDisplay();
-  drawBorders();
+  
   unsigned long curTime;
   unsigned long dispTime;
   pushReturn.update();
 
-  display.setCursor(4,3);
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.println("PUSHER TEST");
-  display.drawFastHLine(0,12,127,WHITE);
-  display.println(pushPercent);
   
-  SoftPWMSet(PUSHER_FET,pushPercent);
+  
  //We want ten samples per percentage.  
  //Count the number of times run at a percent, 
  //decrease percent by 5
  //each run will be sent to serial console
- if (pushReturn.fell())
- {
-  curTime = millis();
-  Serial.print(pushPercent);
-  Serial.print(",");
-  Serial.print(prevTime);
-  Serial.print(",");
-  Serial.print(curTime);
-  Serial.println("");
-  runsLeft--;
-  prevTime = curTime;
-  display.display();
-
-  if (runsLeft <=1)
-  {
-    runsLeft = 10;
-    pushPercent -= 5;
-
-    if (pushPercent <=1)
+  while (true)
+  {      
+    pushReturn.update();
+    //delay(80);
+    if (pushReturn.fell())
     {
-      pushPercent = 100;
+      //display.clearDisplay();
+      drawBorders();
+      //display.setCursor(4,3);
+      //display.setTextSize(1);
+      //display.setTextColor(WHITE);
+      //display.println("PUSHER TEST");
+      //display.drawFastHLine(0,12,127,WHITE);
+      //display.println(pushPercent);
+      curTime = millis();
+      Serial.print(pushPercent);
+      Serial.print(",");
+      Serial.print(curTime - prevTime);
+      Serial.println("");
+      runsLeft--;
+      prevTime = curTime;
+      //display.//display();
+      if (runsLeft ==0)
+      {
+        runsLeft = 10;
+        pushPercent -= 5;
+        if (pushPercent <=1)
+        {
+          pushPercent = 100;
+        }
+      }
+      SoftPWMSet(PUSHER_FET,pushPercent);
+      SoftPWMSet(LED_FET,pushPercent);
+      analogWrite(13,map(pushPercent,0,100,0,255));
+      //display.println(curTime - prevTime);
+      //display.//display();
     }
   }
- }
- 
 }
