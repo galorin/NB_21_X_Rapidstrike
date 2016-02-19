@@ -25,7 +25,7 @@ CS (CS) D12
 // MOSFET #define section
 #define LED_FET       13 // LED effect signal button
 #define FLYWHEEL_FET  A6 // Flywheel MOSFET signal pin
-#define PUSHER_FET    A7 // Dart pusher MOSFET signal pin
+#define PUSHER_FET    12 // Dart pusher MOSFET signal pin
 #define BRAKE_FET     A8 // Pusher brake FET signal pin
 
 // Button and input #define section
@@ -36,7 +36,7 @@ CS (CS) D12
 #define FIRE_TRIGGER  6   // Fire trigger
 #define PUSH_RETURN   7   // Pusher motor return switch
 #define MAG_SENSOR    8   // Switch for detecting Magazine presence
-#define DART_SENSOR   12  // LED sensor for presence of dart
+#define DART_SENSOR   A7  // LED sensor for presence of dart
 #define JAM_DOOR      A0  // Jam door sensor.  This is used to enter maintenance mode and adjusting settings
 
 #define SET_FLY      0    // Flywheel setting
@@ -62,7 +62,7 @@ unsigned long prevTime;
 //Adafruit_SSD1306 //display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
 
 byte flyPercent = 50; 
-byte pushPercent = 100; 
+byte pushPercent = 50                                         c; 
 byte ledPercent = 50;
 byte dartsPerPull = 1;
 byte dartsRemaining = 0;
@@ -83,6 +83,7 @@ void setup()   {
   Serial.println("PWM %, prevTime, curTime");
   //display.begin(SSD1306_SWITCHCAPVCC);
   //display.clearDisplay();
+  pinMode(PUSHER_FET,OUTPUT);
 
   SoftPWMBegin();
   SoftPWMSet(FLYWHEEL_FET,0);
@@ -137,7 +138,6 @@ void loop() {
   pushReturn.update();
 
   
-  
  //We want ten samples per percentage.  
  //Count the number of times run at a percent, 
  //decrease percent by 5
@@ -170,10 +170,10 @@ void loop() {
         pushPercent -= 5;
         if (pushPercent <=1)
         {
-          pushPercent = 100;
+          pushPercent = 50;
         }
       }
-      SoftPWMSet(PUSHER_FET,pushPercent);
+      SoftPWMSetPercent(PUSHER_FET,pushPercent);
       SoftPWMSet(LED_FET,pushPercent);
       analogWrite(13,map(pushPercent,0,100,0,255));
       //display.println(curTime - prevTime);
