@@ -23,37 +23,40 @@ CS (CS) D12
 #define OLED_CS   12 // CS
 
 // MOSFET #define section
-#define LED_FET       A5 // LED effect signal button
-#define FLYWHEEL_FET  A6 // Flywheel MOSFET signal pin
-#define PUSHER_FET    A7 // Dart pusher MOSFET signal pin
-#define BRAKE_FET     A8 // Pusher brake FET signal pin
+#define FLYWHEEL_FET  3 // Flywheel MOSFET signal pin
+#define PUSHER_FET    5 // Dart pusher MOSFET signal pin
+#define BRAKE_FET     6 // Pusher brake FET signal pin
+#define LED_FET       16 // !!A2!! LED effect signal button
 
 // Button and input #define section
-#define BUTTON_L      2   // Right control button
-#define BUTTON_M      3   // Middle control button
-#define BUTTON_R      4   // Left control button
-#define REV_TRIGGER   5   // Flywheel spinup trigger
-#define FIRE_TRIGGER  6   // Fire trigger
-#define PUSH_RETURN   7   // Pusher motor return switch
-#define MAG_SENSOR    8   // Switch for detecting Magazine presence
-#define DART_SENSOR   12  // LED sensor for presence of dart
-#define JAM_DOOR      A0  // Jam door sensor.  This is used to enter maintenance mode and adjusting settings
+#define BUTTON_L      1   // Right control button
+#define BUTTON_M      0   // Middle control button
+#define BUTTON_R      2   // Left control button
+#define PUSH_RETURN   4   // Pusher motor return switch
+#define REV_TRIGGER   7   // Flywheel spinup trigger
+#define FIRE_TRIGGER  8   // Fire trigger
+
+#define MAG_SENSOR    14  // !!A0!! Switch for detecting Magazine presence
+#define JAM_DOOR      15  // !!A1!! Jam door sensor.  This is used to enter maintenance mode and adjusting settings
+#define DART_SENSOR   17  // LED sensor for presence of dart
 
 #define SET_FLY      0    // Flywheel setting
 #define SET_PUSH     1    // Pusher setting
 #define SET_LED      2    // LED brightness setting
 
+
 #if (SSD1306_LCDHEIGHT != 64) 
-#error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
+error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
 #endif
 
 enum magSizes
 {
-  6ROUND,
-  12ROUND,
-  18ROUND,
-  25ROUND,
-  35ROUND
+  unknownROUND,
+  sixROUND,
+  twelveROUND,
+  eighteenROUND,
+  twentyfiveROUND,
+  thirtyfiveROUND
 };
 
 // Button debounce sections
@@ -75,7 +78,7 @@ byte pushPercent = 50;
 byte ledPercent = 50;
 byte dartsPerPull = 1;
 byte dartsRemaining = 0;
-magSizes curMag = 12ROUND;
+magSizes curMag = twelveROUND;
 bool fSingleFire = false;
 
 void drawBorders()
@@ -220,26 +223,41 @@ void setup()   {
   buttonM.interval(5);
   buttonR.interval(5);  
   
-  display.clearDisplay();
-  drawBorders();
-  display.display();
-  
   magSensor.update();
   pushReturn.update();
   
-  if (pushReturn.read() == HIGH)
-  {
+  if (pushReturn.read() == LOW)
+  {    
+    while (!magSensor.read() == HIGH)
+    {
+      magSensor.update();
+      display.clearDisplay();
+      drawBorders();
+      display.setCursor(3,3);
+      display.setTextSize(1);
+      display.setTextColor(WHITE);
+      display.println("Please remove magazine");
+      display.display();
+      delay(50);
+    }
+    
+    display.clearDisplay();
+    drawBorders();
     display.setCursor(3,3);
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.println("Please wait while Pusher is reset");
+    display.display();
     
     while (!pushReturn.rose())
     {
-      SoftPWMSet(PUSHER_FET,10);
+      SoftPWMSet(PUSHER_FET,1);
       pushReturn.update();
     }
     SoftPWMSet(PUSHER_FET,0);
+    analogWrite(BRAKE_FET,100);
+    delay(5);
+    analogWrite(BRAKE_FET,0);
   }
   
 } 
