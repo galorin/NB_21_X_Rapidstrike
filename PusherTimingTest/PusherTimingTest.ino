@@ -43,6 +43,8 @@ CS (CS) D12
 #define SET_PUSH     1    // Pusher setting
 #define SET_LED      2    // LED brightness setting
 
+#define MAX_FET     60    // Maximum FET speed to prevent burnout
+
 #if (SSD1306_LCDHEIGHT != 64) 
 #error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
 #endif
@@ -170,7 +172,7 @@ void loop() {
         pushPercent -= 5;
         if (pushPercent <=1)
         {
-          pushPercent = 50;
+          pushPercent = MAX_FET;
         }
       }
       SoftPWMSetPercent(PUSHER_FET,pushPercent);
