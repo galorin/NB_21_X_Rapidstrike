@@ -162,24 +162,24 @@ void resetPusher()
   }
 }
 
-void drawDart(byte numOfDarts)
-{
+//void drawDart(byte numOfDarts)
+//{
   // A dart drawing is 12 pixels wide and 5 pixels high.
   // XXXXXXXXXXX
   // X       X  X
   // X       X   X
   // X       X  X
   // XXXXXXXXXXX
-  for (byte iOffset = 0; iOffset < numOfDarts; iOffset++)
-  {
-  byte iMove = iOffset * 12;
+//  for (byte iOffset = 0; iOffset < numOfDarts; iOffset++)
+//  {
+//  byte iMove = iOffset * 12;
   //display.drawFastHLine(3 + iMove,42,10,WHITE);
   //display.drawFastHLine(3 + iMove,46,10,WHITE);
   //display.drawFastVLine(3 + iMove,42,5,WHITE);
   //display.drawFastVLine(10 + iMove,42,5,WHITE);
   //display.drawFastVLine(13 + iMove,43,3,WHITE);
-  }
-}
+//  }
+//}
 
 void setup()   {  
   prevTime = millis();
