@@ -110,7 +110,7 @@ bool checkErrors()
 
   if (errorsFound)
   {
-    display.cleardisplay();
+    display.clearDisplay();
     drawBorders();
     display.setTextSize(2);
     display.setTextColor(WHITE);
@@ -141,7 +141,7 @@ bool checkErrors()
 
 void resetPusher()
 {
-  display.cleardisplay();
+  display.clearDisplay();
   drawBorders();
   display.setCursor(10,7);
   display.setTextSize(2);
@@ -185,7 +185,7 @@ void setup()   {
   prevTime = millis();
   //Serial.begin(9600);
   display.begin(SSD1306_SWITCHCAPVCC);
-  display.cleardisplay();
+  display.clearDisplay();
 
   SoftPWMBegin();
   SoftPWMSet(FLYWHEEL_FET,0);
@@ -232,7 +232,7 @@ void setup()   {
     while (!magSensor.read() == HIGH)
     {
       magSensor.update();
-      display.cleardisplay();
+      display.clearDisplay();
       drawBorders();
       display.setCursor(3,3);
       display.setTextSize(1);
@@ -242,7 +242,7 @@ void setup()   {
       delay(50);
     }
     
-    display.cleardisplay();
+    display.clearDisplay();
     drawBorders();
     display.setCursor(3,3);
     display.setTextSize(1);
@@ -264,7 +264,7 @@ void setup()   {
 } 
 
 void loop() {
-  display.cleardisplay();
+  display.clearDisplay();
   drawBorders();
   
   revTrigger.update();
@@ -287,7 +287,7 @@ void loop() {
   buttonM.update();
   buttonR.update();  
 
-  display.cleardisplay();
+  display.clearDisplay();
   drawBorders();
   
   display.setCursor(40,3);
@@ -526,7 +526,7 @@ void loop() {
                }
                if (curTime - prevTime > 50)
                  {
-                   display.cleardisplay();
+                   display.clearDisplay();
                    drawBorders();
                    display.setCursor(33,3);
                    display.setTextSize(2);
