@@ -442,45 +442,45 @@ void loop() {
       display.setCursor(10,20);
       display.println("FULL-AUTO");
     }
-
-  display.drawFastHLine(0,50,127,WHITE);
-  display.setTextSize(1);
-  display.setCursor(21,53);
-  display.print("-");
-  display.drawFastVLine(41,52,22,WHITE);
-  display.setCursor(53,53);
-  display.print("MODE");
-  display.drawFastVLine(83,52,22,WHITE);
-  display.setCursor(105,53);
-  display.print("+");
-  
-  if (buttonL.fell())
-  {
-    if (fSingleFire)
+    
+    display.drawFastHLine(0,50,127,WHITE);
+    display.setTextSize(1);
+    display.setCursor(21,53);
+    display.print("-");
+    display.drawFastVLine(41,52,22,WHITE);
+    display.setCursor(53,53);
+    display.print("MODE");
+    display.drawFastVLine(83,52,22,WHITE);
+    display.setCursor(105,53);
+    display.print("+");
+    
+    if (buttonL.fell())
     {
-      if (dartsPerPull > 1)
+      if (fSingleFire)
       {
-        dartsPerPull--;
+        if (dartsPerPull > 1)
+        {
+          dartsPerPull--;
+        }
       }
     }
-  }
-  
-  if (buttonM.fell())
+    
+    if (buttonM.fell())
     {
       fSingleFire = !fSingleFire;
       //Serial.println("Mode switch");
     }
   
-  if (buttonR.fell())
-  {
-    if (fSingleFire)
+    if (buttonR.fell())
     {
-      if (dartsPerPull < 10)
+      if (fSingleFire)
       {
-        dartsPerPull++;
+        if (dartsPerPull < 10)
+        {
+          dartsPerPull++;
+        }
       }
     }
-  }
 
     // There is a soft lock here.  If the flywheel trigger is held down, spin up the flywheels.
     // When the trigger is pulled, start up the pusher motor and run it.
@@ -489,7 +489,7 @@ void loop() {
     if (revTrigger.read() == LOW)
     {
     //Serial.println("flywheel start");
-    SoftPWMSetPercent(FLYWHEEL_FET,flyPercent);
+      SoftPWMSetPercent(FLYWHEEL_FET,flyPercent);
       if (fireTrigger.read() == LOW)
       {
         //Serial.println("firing start");
