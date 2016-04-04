@@ -72,7 +72,7 @@ Bounce jamDoor = Bounce();
 
 unsigned long prevTime;
 
-//Adafruit_SSD1306 //display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
+Adafruit_SSD1306 display(OLED_MOSI, OLED_SCK, OLED_A0, OLED_RST, OLED_CS); 
 
 byte flyPercent = 40; 
 byte pushPercent = 40; 
@@ -84,10 +84,10 @@ bool fSingleFire = false;
 
 void drawBorders()
 {
-  //display.drawFastHLine(0,0,127,WHITE);
-  //display.drawFastVLine(127,0,64,WHITE);
-  //display.drawFastHLine(0,63,127,WHITE);
-  //display.drawFastVLine(0,0,63,WHITE);
+  display.drawFastHLine(0,0,127,WHITE);
+  display.drawFastVLine(127,0,64,WHITE);
+  display.drawFastHLine(0,63,127,WHITE);
+  display.drawFastVLine(0,0,63,WHITE);
 }
 
 bool checkErrors()
@@ -110,28 +110,28 @@ bool checkErrors()
 
   if (errorsFound)
   {
-    //display.clear//display();
+    display.cleardisplay();
     drawBorders();
-    //display.setTextSize(2);
-    //display.setTextColor(WHITE);
-    //display.setCursor(35,3);
-    //display.println("ERROR");
-    ////display.setTextSize(1);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(35,3);
+    display.println("ERROR");
+    //display.setTextSize(1);
     if (errorStatus & B00000001)
     {
-      //display.setCursor(18,20);
-      //display.println("MAGAZINE");
+      display.setCursor(18,20);
+      display.println("MAGAZINE");
     }
     if (errorStatus & B00000010)
     {
-      //display.println("No Dart");
+      display.println("No Dart");
     }
 
-    //only update the //display every 50ms
+    //only update the display every 50ms
     curTime = millis();
     if (curTime - prevTime > 50)
     {
-      //display.//display();
+      display.display();
       prevTime = curTime;
     }
   }
@@ -141,15 +141,15 @@ bool checkErrors()
 
 void resetPusher()
 {
-  //display.clear//display();
+  display.cleardisplay();
   drawBorders();
-  //display.setCursor(10,7);
-  //display.setTextSize(2);
-  //display.setTextColor(WHITE);
-  //display.println("RESETTING");
-  //display.setCursor(27,30);
-  //display.println("PUSHER");
-  //display.//display();
+  display.setCursor(10,7);
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.println("RESETTING");
+  display.setCursor(27,30);
+  display.println("PUSHER");
+  display.display();
   while (!pushReturn.rose())
   {
     SoftPWMSet(PUSHER_FET,10);
@@ -173,19 +173,19 @@ void drawDart(byte numOfDarts)
   for (byte iOffset = 0; iOffset < numOfDarts; iOffset++)
   {
   byte iMove = iOffset * 12;
-  //display.drawFastHLine(3 + iMove,42,10,WHITE);
-  //display.drawFastHLine(3 + iMove,46,10,WHITE);
-  //display.drawFastVLine(3 + iMove,42,5,WHITE);
-  //display.drawFastVLine(10 + iMove,42,5,WHITE);
-  //display.drawFastVLine(13 + iMove,43,3,WHITE);
+  display.drawFastHLine(3 + iMove,42,10,WHITE);
+  display.drawFastHLine(3 + iMove,46,10,WHITE);
+  display.drawFastVLine(3 + iMove,42,5,WHITE);
+  display.drawFastVLine(10 + iMove,42,5,WHITE);
+  display.drawFastVLine(13 + iMove,43,3,WHITE);
   }
 }
 
 void setup()   {  
   prevTime = millis();
   //Serial.begin(9600);
-  //display.begin(SSD1306_SWITCHCAPVCC);
-  //display.clear//display();
+  display.begin(SSD1306_SWITCHCAPVCC);
+  display.cleardisplay();
 
   SoftPWMBegin();
   SoftPWMSet(FLYWHEEL_FET,0);
@@ -232,23 +232,23 @@ void setup()   {
     while (!magSensor.read() == HIGH)
     {
       magSensor.update();
-      //display.clear//display();
+      display.cleardisplay();
       drawBorders();
-      //display.setCursor(3,3);
-      //display.setTextSize(1);
-      //display.setTextColor(WHITE);
-      //display.println("Please remove magazine");
-      //display.//display();
+      display.setCursor(3,3);
+      display.setTextSize(1);
+      display.setTextColor(WHITE);
+      display.println("Please remove magazine");
+      display.display();
       delay(50);
     }
     
-    //display.clear//display();
+    display.cleardisplay();
     drawBorders();
-    //display.setCursor(3,3);
-    //display.setTextSize(1);
-    //display.setTextColor(WHITE);
-    //display.println("Please wait while Pusher is reset");
-    //display.//display();
+    display.setCursor(3,3);
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.println("Please wait while Pusher is reset");
+    display.display();
     
     while (!pushReturn.rose())
     {
@@ -264,7 +264,7 @@ void setup()   {
 } 
 
 void loop() {
-  //display.clear//display();
+  display.cleardisplay();
   drawBorders();
   
   revTrigger.update();
@@ -287,40 +287,40 @@ void loop() {
   buttonM.update();
   buttonR.update();  
 
-  //display.clear//display();
+  display.cleardisplay();
   drawBorders();
   
-  //display.setCursor(40,3);
-  //display.setTextSize(1);
-  //display.setTextColor(WHITE);
-  //display.println("SETTINGS");
-  //display.drawFastHLine(0,12,127,WHITE);
+  display.setCursor(40,3);
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.println("SETTINGS");
+  display.drawFastHLine(0,12,127,WHITE);
   
-  //display.setCursor(3,15);
-  //display.setTextSize(1);
-  //display.print("FLYWHEEL");
-  //display.fillRect(53,15,constrain(map(flyPercent,0,100,0,70),0,100),7,WHITE);
-  //display.setCursor(3,23);  
-  //display.print("PUSHER");  
-  //display.fillRect(53,23,constrain(map(pushPercent,0,100,0,70),0,100),7,WHITE);
-  //display.setCursor(3,31);  
-  //display.print("LED");  
-  //display.fillRect(53,31,constrain(map(ledPercent,0,100,0,70),0,100),7,WHITE);
-  //display.drawFastHLine(0,39,127,WHITE);
+  display.setCursor(3,15);
+  display.setTextSize(1);
+  display.print("FLYWHEEL");
+  display.fillRect(53,15,constrain(map(flyPercent,0,100,0,70),0,100),7,WHITE);
+  display.setCursor(3,23);  
+  display.print("PUSHER");  
+  display.fillRect(53,23,constrain(map(pushPercent,0,100,0,70),0,100),7,WHITE);
+  display.setCursor(3,31);  
+  display.print("LED");  
+  display.fillRect(53,31,constrain(map(ledPercent,0,100,0,70),0,100),7,WHITE);
+  display.drawFastHLine(0,39,127,WHITE);
   if (mtnControl == SET_PUSH)
   {
-    //display.setCursor(19,41);  
-    //display.print("CHANGING:PUSHER");
+    display.setCursor(19,41);  
+    display.print("CHANGING:PUSHER");
   }
   else if (mtnControl == SET_FLY)
   {
-    //display.setCursor(13,41);  
-    //display.print("CHANGING:FLYWHEEL");
+    display.setCursor(13,41);  
+    display.print("CHANGING:FLYWHEEL");
   }
   else if (mtnControl == SET_LED)
   {
-    //display.setCursor(28,41);  
-    //display.print("CHANGING:LED");
+    display.setCursor(28,41);  
+    display.print("CHANGING:LED");
   }
   
   
@@ -394,20 +394,20 @@ void loop() {
     }
   }
   
-  //display.drawFastHLine(0,50,127,WHITE);
-  //display.setTextSize(1);
-  //display.setCursor(21,53);
-  //display.print("-");
-  //display.drawFastVLine(41,52,22,WHITE);
-  //display.setCursor(53,53);
-  //display.print("MODE");
-  //display.drawFastVLine(83,52,22,WHITE);
-  //display.setCursor(105,53);
-  //display.print("+");
+  display.drawFastHLine(0,50,127,WHITE);
+  display.setTextSize(1);
+  display.setCursor(21,53);
+  display.print("-");
+  display.drawFastVLine(41,52,22,WHITE);
+  display.setCursor(53,53);
+  display.print("MODE");
+  display.drawFastVLine(83,52,22,WHITE);
+  display.setCursor(105,53);
+  display.print("+");
   
   if (curTime - prevTime > 50)
   {
-    //display.//display();
+    display.display();
     prevTime = curTime;
   }  
   }
@@ -415,44 +415,44 @@ void loop() {
   if (!checkErrors())// This is error checking.
   {
     //Serial.println("This is fine");
-    //display.setCursor(33,3);
-    //display.setTextSize(2);
-    //display.setTextColor(WHITE);
-    //display.println("READY");
+    display.setCursor(33,3);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.println("READY");
     
     if (fSingleFire)
     {
       if (dartsPerPull == 1)
       {
-        //display.setTextSize(2);
-        //display.setCursor(10,20);
-        //display.println("SEMI-AUTO");
+        display.setTextSize(2);
+        display.setCursor(10,20);
+        display.println("SEMI-AUTO");
       }
       else
       {
-        //display.setTextSize(2);
-        //display.setCursor(5,20);
-        //display.println("MULTI-FIRE");
+        display.setTextSize(2);
+        display.setCursor(5,20);
+        display.println("MULTI-FIRE");
         drawDart(dartsPerPull);
       }
     }
     else
     {
-      //display.setTextSize(2);
-      //display.setCursor(10,20);
-      //display.println("FULL-AUTO");
+      display.setTextSize(2);
+      display.setCursor(10,20);
+      display.println("FULL-AUTO");
     }
 
-  //display.drawFastHLine(0,50,127,WHITE);
-  //display.setTextSize(1);
-  //display.setCursor(21,53);
-  //display.print("-");
-  //display.drawFastVLine(41,52,22,WHITE);
-  //display.setCursor(53,53);
-  //display.print("MODE");
-  //display.drawFastVLine(83,52,22,WHITE);
-  //display.setCursor(105,53);
-  //display.print("+");
+  display.drawFastHLine(0,50,127,WHITE);
+  display.setTextSize(1);
+  display.setCursor(21,53);
+  display.print("-");
+  display.drawFastVLine(41,52,22,WHITE);
+  display.setCursor(53,53);
+  display.print("MODE");
+  display.drawFastVLine(83,52,22,WHITE);
+  display.setCursor(105,53);
+  display.print("+");
   
   if (buttonL.fell())
   {
@@ -526,17 +526,17 @@ void loop() {
                }
                if (curTime - prevTime > 50)
                  {
-                   //display.clear//display();
+                   display.cleardisplay();
                    drawBorders();
-                   //display.setCursor(33,3);
-                   //display.setTextSize(2);
-                   //display.setTextColor(WHITE);
-                   //display.println("READY");        
-                   //display.setTextSize(2);
-                   //display.setCursor(5,20);
-                   //display.println("MULTI-FIRE");
+                   display.setCursor(33,3);
+                   display.setTextSize(2);
+                   display.setTextColor(WHITE);
+                   display.println("READY");        
+                   display.setTextSize(2);
+                   display.setCursor(5,20);
+                   display.println("MULTI-FIRE");
                    drawDart(dartsRemaining);
-                   //display.//display();
+                   display.display();
                    prevTime = curTime;
                  }
               //fire
@@ -576,7 +576,7 @@ void loop() {
   
   if (curTime - prevTime > 50)
   {
-    //display.//display();
+    display.display();
     prevTime = curTime;
   }
 }
