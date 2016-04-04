@@ -52,12 +52,12 @@ CS (CS) D12
 
 enum magSizes
 {
-  unknownROUND,
-  sixROUND,
-  twelveROUND,
-  eighteenROUND,
-  twentyfiveROUND,
-  thirtyfiveROUND
+  unknown,
+  six,
+  twelve,
+  eighteen,
+  twentyfive,
+  thirtyfive
 };
 
 // Button debounce sections
@@ -80,7 +80,7 @@ byte ledPercent = 50;
 byte dartsPerPull = 1;
 byte dartsRemaining = 0;
 magSizes curMag = twelveROUND;
-bool fSingleFire = false;
+bool fSingleFire = true;
 
 void drawBorders()
 {
