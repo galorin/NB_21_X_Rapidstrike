@@ -47,7 +47,7 @@ CS (CS) D12
 #define MAX_FET     60    //Maximum motor speed to prevent burnout
 
 #if (SSD1306_LCDHEIGHT != 64) 
-error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
+#error("Height incorrect, please fix Adafruit_SSD1306.h!"); 
 #endif
 
 enum magSizes
