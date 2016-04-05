@@ -79,7 +79,7 @@ byte pushPercent = 40;
 byte ledPercent = 50;
 byte dartsPerPull = 1;
 byte dartsRemaining = 0;
-magSizes curMag = twelveROUND;
+magSizes curMag = twelve;
 bool fSingleFire = true;
 
 void drawBorders()
